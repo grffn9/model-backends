@@ -1,4 +1,5 @@
 import { checkBackend, findCommand, lookupOnce } from "./availability.ts";
+import { nearestEffort } from "./effort.ts";
 import { modelHeadroom, providerHeadroom } from "./live-usage.ts";
 import type { LiveUsage } from "./live-usage.ts";
 import { BackendError } from "./types.ts";
@@ -123,7 +124,10 @@ export async function* runWithFallback(options: FallbackOptions): AsyncGenerator
     let sent = false;
     let usage = { inputTokens: 0, outputTokens: 0 };
     try {
-      for await (const event of adapter(backend, input) as AsyncIterable<OutputEvent>) {
+      // Each backend gets the level nearest the one asked for, or none if it takes no setting.
+      const effort = input.effort && nearestEffort(backend, input.effort);
+      const request = { ...input, effort };
+      for await (const event of adapter(backend, request) as AsyncIterable<OutputEvent>) {
         if (event.type === "usage") {
           usage = { inputTokens: event.inputTokens, outputTokens: event.outputTokens };
           continue;

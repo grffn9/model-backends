@@ -1,6 +1,6 @@
 {
   "name": "model-backends",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Connect AI token sources (subscription CLIs, API keys, OpenAI-compatible hosts) behind one streaming adapter, with live usage, caps and limit fallback.",
   "type": "module",
   "engines": {

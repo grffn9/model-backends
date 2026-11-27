@@ -153,6 +153,21 @@ test("when every backend fails, the last failure is thrown", async () => {
   );
 });
 
+test("a requested effort is clamped to each backend's own levels", async () => {
+  const seen: (string | undefined)[] = [];
+  const adapter: Adapter = async function* (backend, input) {
+    seen.push(input.effort);
+    if (backend.id === "a") throw new BackendError("unavailable", "down");
+    yield { type: "text", text: "ok" };
+  };
+  await run({
+    backends: [makeBackend({ id: "a", efforts: ["low", "high"] }), makeBackend({ id: "b" })],
+    adapters: { openai: adapter },
+    input: { messages: [{ role: "user", content: "hi" }], attachments: [], effort: "max" },
+  });
+  assert.deepEqual(seen, ["high", undefined]);
+});
+
 test("usage is priced and recorded without the prompt", async () => {
   const ledger = new UsageLedger(":memory:");
   const adapter: Adapter = async function* () {
