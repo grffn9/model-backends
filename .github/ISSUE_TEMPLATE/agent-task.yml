@@ -1,0 +1,34 @@
+name: Agent task
+description: A spec an AI agent can pick up and build
+labels: ["agent-task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Add an `engine:*` label to choose who builds this, then `ready` once the spec is complete.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should be true when this is done, and why.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checkable conditions. The agent verifies each one before opening a PR.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Files / area
+      description: Where the change belongs, and anything that must not change.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Links, examples, constraints.

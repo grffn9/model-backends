@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Detect stack
+        id: detect
+        run: |
+          [ -f package.json ] && echo "node=true" >> "$GITHUB_OUTPUT"
+          if [ -f pyproject.toml ] || [ -f requirements.txt ]; then echo "python=true" >> "$GITHUB_OUTPUT"; fi
+          true
+
+      - if: steps.detect.outputs.node == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+
+      - name: Node checks
+        if: steps.detect.outputs.node == 'true'
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run lint --if-present
+          npm run typecheck --if-present
+          npm test --if-present
+
+      - if: steps.detect.outputs.python == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Python checks
+        if: steps.detect.outputs.python == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          [ -f requirements.txt ] && pip install -r requirements.txt
+          [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
+          [ -f pyproject.toml ] && pip install -e .
+          pip install pytest
+          python -m pytest || { code=$?; [ "$code" -eq 5 ] && echo "No tests collected" || exit "$code"; }
+
+      - name: Nothing to check yet
+        if: steps.detect.outputs.node != 'true' && steps.detect.outputs.python != 'true'
+        run: echo "No package.json, pyproject.toml or requirements.txt yet. Add the stack, then CI runs its checks."
